@@ -71,11 +71,11 @@ NSString * const kBAFluidViewCMMotionUpdate = @"BAFluidViewCMMotionUpdate";
 -  (id)initWithFrame:(CGRect)aRect maxAmplitude:(int)aMaxAmplitude minAmplitude:(int)aMinAmplitude amplitudeIncrement:(int)aAmplitudeIncrement
 {
     self = [super initWithFrame:aRect];
-    
+
     if (self)
     {
         [self initialize];
-        
+
         //setting custom wave properties
         self.maxAmplitude = aMaxAmplitude;
         self.minAmplitude = aMinAmplitude;
@@ -88,11 +88,11 @@ NSString * const kBAFluidViewCMMotionUpdate = @"BAFluidViewCMMotionUpdate";
 -  (id)initWithFrame:(CGRect)aRect maxAmplitude:(int)aMaxAmplitude minAmplitude:(int)aMinAmplitude amplitudeIncrement:(int)aAmplitudeIncrement startElevation:(NSNumber*)aStartElevation
 {
     self = [super initWithFrame:aRect];
-    
+
     if (self)
     {
         [self initialize];
-        
+
         //setting custom wave properties
         self.maxAmplitude = aMaxAmplitude;
         self.minAmplitude = aMinAmplitude;
@@ -107,11 +107,11 @@ NSString * const kBAFluidViewCMMotionUpdate = @"BAFluidViewCMMotionUpdate";
 -  (id)initWithFrame:(CGRect)aRect
 {
     self = [super initWithFrame:aRect];
-    
+
     if (self)
     {
         [self initialize];
-        
+
     }
     return self;
 }
@@ -119,7 +119,7 @@ NSString * const kBAFluidViewCMMotionUpdate = @"BAFluidViewCMMotionUpdate";
 -  (id)initWithFrame:(CGRect)aRect startElevation:(NSNumber*)aStartElevation
 {
     self = [super initWithFrame:aRect];
-    
+
     if (self)
     {
         [self initialize];
@@ -129,9 +129,9 @@ NSString * const kBAFluidViewCMMotionUpdate = @"BAFluidViewCMMotionUpdate";
 }
 
 - (id)initWithCoder:(NSCoder *)aDecoder {
-    
+
     self = [super initWithCoder:aDecoder];
-    
+
     if (self)
     {
         [self initialize];
@@ -145,24 +145,24 @@ NSString * const kBAFluidViewCMMotionUpdate = @"BAFluidViewCMMotionUpdate";
         [self stopAnimation];
         return;
     }
-    
+
     //the view is being added
     //may also need to adjust tilt since CMMotion only has orinigal refernece frame
     if(self.roll){
         [self updateRollAdjustmentBasedOnOrientation];
     }
     [self startAnimation];
-    
+
 }
 
 - (void)layoutSubviews {
     [super layoutSubviews];
-    
+
     //layout only if device has change orientation
     if(self.orientation != [[UIDevice currentDevice] orientation]){
-        
+
         self.orientation = [[UIDevice currentDevice] orientation];
-        
+
         //I can either remove the animation and have a slight lag or the user can see one animation where the wave
         //still has the frame of the old orientation.
         [self stopAnimation];
@@ -231,16 +231,16 @@ NSString * const kBAFluidViewCMMotionUpdate = @"BAFluidViewCMMotionUpdate";
             self.rootView = self.rootView.superview;
         }
     }
-    
+
     self.orientation = [[UIDevice currentDevice] orientation];
     self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    
+
     // create the wave layer and make it blue
     self.clipsToBounds = YES;
     self.lineLayer = [CAShapeLayer layer];
     self.lineLayer.fillColor = [UIColor colorWithHex:0x6BB9F0].CGColor;
     self.lineLayer.strokeColor = [UIColor colorWithHex:0x6BB9F0].CGColor;
-    
+
     //default wave properties
     self.fillAutoReverse = YES;
     self.fillRepeatCount = HUGE_VALF;
@@ -248,30 +248,31 @@ NSString * const kBAFluidViewCMMotionUpdate = @"BAFluidViewCMMotionUpdate";
     self.maxAmplitude = 40;
     self.minAmplitude = 5;
     self.startingAmplitude = self.maxAmplitude;
-    self.waveLength = CGRectGetWidth(self.rootView.frame);
+    self.waveLength = CGRectGetWidth(self.rootView.frame) * 3;
     self.startElevation = @0;
     self.fillDuration = 7.0;
-    self.finalX = 5*self.waveLength;
-    
+    self.finalX = 5 * self.waveLength;
+
     //available amplitudes
     self.amplitudeArray = [NSArray arrayWithArray:[self createAmplitudeOptions]];
-    
+
     //creating a linelayer frame
     self.lineLayer.anchorPoint= CGPointMake(0, 0);
-    CGRect frame = CGRectMake(0, CGRectGetHeight(self.frame), self.finalX, CGRectGetHeight(self.rootView.frame));
+    CGRect frame = CGRectMake(-CGRectGetWidth(self.rootView.frame), CGRectGetHeight(self.frame),
+                              self.finalX, CGRectGetHeight(self.rootView.frame));
     self.lineLayer.frame = frame;
     //    self.lineLayer.transform = CATransform3DMakeScale(1.02, 1.02, 1);
-    
+
     //fill level
     self.initialFill = YES;
     self.fillLevel = @0.0;
-    
+
     //adding notification for when the app enters the foreground/background
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(stopAnimation)
                                                  name:UIApplicationWillResignActiveNotification
                                                object:nil];
-    
+
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(startAnimation)
                                                  name:UIApplicationDidBecomeActiveNotification
@@ -279,20 +280,23 @@ NSString * const kBAFluidViewCMMotionUpdate = @"BAFluidViewCMMotionUpdate";
 }
 
 - (void)startTiltAnimation {
-    
+
     //linelayer can't be manipulated without changing it's anchor point
     //instead we put the linelayer in a layer we can change the anchor point on
     if(!self.rollLayer){
         //creating layer which will rotate
         self.rollLayer = CALayer.layer;
-        
+
         //add linelayer to this layer now
         [self.rollLayer addSublayer:self.lineLayer];
         [self.layer addSublayer:self.rollLayer];
     }
-    
-    self.rollLayer.frame = self.frame;
-    
+
+    CGRect frame = self.bounds;
+    frame.origin.x = -frame.size.width;
+    frame.size.width *= 3;
+    self.rollLayer.frame = frame;
+
     //listen for the device manager
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(addTiltAnimations:)
@@ -303,20 +307,20 @@ NSString * const kBAFluidViewCMMotionUpdate = @"BAFluidViewCMMotionUpdate";
 - (void)startAnimation {
     if (!self.animating) {
         self.startingAmplitude = self.maxAmplitude;
-        
+
         //Phase Shift Animation
         CAKeyframeAnimation *horizontalAnimation =
         [CAKeyframeAnimation animationWithKeyPath:@"position.x"];
-        
+
         horizontalAnimation.values = @[@(self.lineLayer.position.x-self.waveLength*2),@(self.lineLayer.position.x-self.waveLength)];
-        
-        
+
+
         horizontalAnimation.duration = 1.0;
         horizontalAnimation.repeatCount = HUGE;
         horizontalAnimation.removedOnCompletion = NO;
         horizontalAnimation.fillMode = kCAFillModeForwards;
         [self.lineLayer addAnimation:horizontalAnimation forKey:@"horizontalAnimation"];
-        
+
         //Wave Crest Animations
         self.waveCrestAnimation = [CAKeyframeAnimation animationWithKeyPath:@"path"];
         self.waveCrestAnimation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseIn];
@@ -337,7 +341,7 @@ NSString * const kBAFluidViewCMMotionUpdate = @"BAFluidViewCMMotionUpdate";
         } else {
             [self.layer addSublayer:self.lineLayer];
         }
-        
+
         self.animating = YES;
     }
 }
@@ -365,35 +369,37 @@ NSString * const kBAFluidViewCMMotionUpdate = @"BAFluidViewCMMotionUpdate";
     [self.lineLayer removeAnimationForKey:@"verticalAnimation"];
 }
 
-- (void)fillTo:(NSNumber*)fillPercentage {
-    float fillDifference = fabs(fillPercentage.floatValue-self.fillLevel.floatValue);
-    if(fillDifference == 0){
-        //no change
-        return;
-    }
-    self.fillLevel = fillPercentage;
-    CAKeyframeAnimation *verticalAnimation =
-    [CAKeyframeAnimation animationWithKeyPath:@"position.y"];
-    float finalPosition;
-    finalPosition = (1.0 - fillPercentage.doubleValue)*CGRectGetHeight(self.frame);
-    
+- (CGFloat)positionForPercentage:(NSNumber *)fillPercentage {
+    float finalPosition = (1.0 - fillPercentage.doubleValue) *
+    CGRectGetHeight(self.frame);
+
     //bit hard to define a hard endpoint with the dynamic waves
     if ([self.fillLevel  isEqual: @1.0]){
-        finalPosition = finalPosition - 2*self.maxAmplitude;
+        finalPosition = finalPosition - 2 * self.maxAmplitude;
     }
     else if (self.fillLevel.doubleValue > 0.98) {
         finalPosition = finalPosition - self.maxAmplitude;
     }
-    
-    
+    return finalPosition;
+}
+
+- (void)fillTo:(NSNumber*)fillPercentage {
+    float fillDifference = fabs(fillPercentage.floatValue-self.fillLevel.floatValue);
+    if (fillDifference == 0) {
+        //no change
+        return;
+    }
+    self.fillLevel = fillPercentage;
+    float finalPosition = [self positionForPercentage:fillPercentage];
     //fill animation
     //the animation glitches because the horizontal x of the layer is never in the same spot at the end of the animation. We can use the presentation layer to get the current x. This isn't what the presentation layer is for, but can't find a way to make a smooth transition.
     CALayer *initialLayer = self.lineLayer;
-    
+
     if (!self.initialFill) {
         initialLayer = self.lineLayer.presentationLayer;
     }
-    
+    CAKeyframeAnimation *verticalAnimation =
+    [CAKeyframeAnimation animationWithKeyPath:@"position.y"];
     verticalAnimation.values = @[@(initialLayer.position.y),@(finalPosition)];
     verticalAnimation.duration = self.fillDuration*fillDifference;
     verticalAnimation.autoreverses = self.fillAutoReverse;
@@ -401,7 +407,20 @@ NSString * const kBAFluidViewCMMotionUpdate = @"BAFluidViewCMMotionUpdate";
     verticalAnimation.removedOnCompletion = NO;
     verticalAnimation.fillMode = kCAFillModeForwards;
     [self.lineLayer addAnimation:verticalAnimation forKey:@"verticalAnimation"];
+
     self.initialFill = NO;
+}
+
+- (void)fill:(NSNumber *)fillPercentage {
+    float fillDifference = fabs(fillPercentage.floatValue-self.fillLevel.floatValue);
+    if (fillDifference == 0) {
+        //no change
+        return;
+    }
+    self.fillLevel = fillPercentage;
+    float finalPosition = [self positionForPercentage:fillPercentage];
+    CALayer *currentLayer = _lineLayer;
+    self.lineLayer.position = CGPointMake(currentLayer.position.x, finalPosition);
 }
 
 #pragma mark - Private
@@ -412,12 +431,12 @@ NSString * const kBAFluidViewCMMotionUpdate = @"BAFluidViewCMMotionUpdate";
     frame.origin.y = CGRectGetHeight(self.rootView.frame)*((1-startElevation.floatValue));
     self.lineLayer.frame = frame;
     self.primativeStartElevation = startElevation.doubleValue;
-    
+
 }
 
 - (void)reInitializeLayer {
     //This method occurs when the device is rotated
-    
+
     self.rootView = [self.window.subviews objectAtIndex:0];
     if (!self.rootView) {
         self.rootView = self;
@@ -425,24 +444,24 @@ NSString * const kBAFluidViewCMMotionUpdate = @"BAFluidViewCMMotionUpdate";
             self.rootView = self.rootView.superview;
         }
     }
-    
+
     //values that need to be adjusted due to change in width
     self.waveLength = CGRectGetWidth(self.rootView.frame);
     self.finalX = 5*self.waveLength;
-    
+
     //creating the linelayer/rollLayer frame to fit new orientation
     self.lineLayer.anchorPoint= CGPointMake(0, 0);
     CGRect frame = CGRectMake(0, CGRectGetHeight(self.frame), self.finalX, CGRectGetHeight(self.rootView.frame));
     self.lineLayer.frame = frame;
-    
+
     //need to grab the presentation again as a base
     self.initialFill = YES;
-    
+
     //for some reason I can't access _startElevation, but a primitive can be accessed. Right now
     //all this does is redo the elevation adjustment due to change in height of device
     self.startElevation = @(self.primativeStartElevation);
-    
-    
+
+
     //the animation for fill will have to repeat as the height as changed
     if (![self.fillLevel isEqual:@0]) {
         [self fillTo:self.fillLevel];
@@ -450,23 +469,23 @@ NSString * const kBAFluidViewCMMotionUpdate = @"BAFluidViewCMMotionUpdate";
 }
 
 - (void)updateWaveCrestAnimation {
-    
+
     //Wave Crest animation
     [self.lineLayer removeAnimationForKey:@"waveCrestAnimation"];
     self.waveCrestAnimation.values = [self getBezierPathValues];
     [self.lineLayer addAnimation:self.waveCrestAnimation forKey:@"waveCrestAnimation"];
-    
+
 }
 
 - (void)addTiltAnimations:(NSNotification *)note {
-    
+
     //grab data for roll from the notification
     //computing roll leads to a more stable value
     //http://stackoverflow.com/q/19239482/1408431
     CMDeviceMotion *data = [[note userInfo] valueForKey:@"data"];
     CMQuaternion quat = data.attitude.quaternion;
     CGFloat roll = atan2(2*(quat.y*quat.w - quat.x*quat.z), 1 - 2*quat.y*quat.y - 2*quat.z*quat.z);
-    
+
     //limiting tilt
     if((roll + self.rollOrientationAdjustment)< -1){
         roll = -1;
@@ -474,19 +493,19 @@ NSString * const kBAFluidViewCMMotionUpdate = @"BAFluidViewCMMotionUpdate";
         roll = 1;
     }
     self.roll = roll;
-    
+
     //change wave direction if we're tilting in a different direction
     BAFLUIDVIEWHORIZONTALDIRECTION oldDirection = self.waveDirection;
     self.waveDirection = (self.roll > -0.2) ? BAFLUIDVIEWHORIZONTALDIRECTIONRIGHT:BAFLUIDVIEWHORIZONTALDIRECTIONLEFT;
     if((self.waveDirection != oldDirection)){
         [self updateHorizontalAnimation];
     }
-    
+
     [self addRotationAnimation];
 }
 
 - (void) addRotationAnimation {
-    
+
     //tilt relative to the phone
     CALayer *presentationLayer = self.rollLayer.presentationLayer;
     CATransform3D zRotation = CATransform3DMakeRotation(-(self.roll+self.rollOrientationAdjustment)*0.7, 0, 0, 1.0);
@@ -501,32 +520,32 @@ NSString * const kBAFluidViewCMMotionUpdate = @"BAFluidViewCMMotionUpdate";
 }
 
 - (void)updateHorizontalAnimation {
-    
+
     //shift from current position to start of reverse direction
     CABasicAnimation *initialHorizontalAnimation =
     [CABasicAnimation animationWithKeyPath:@"position.x"];
-    
+
     CALayer* presentationLayer = self.lineLayer.presentationLayer;
     initialHorizontalAnimation.fromValue =@(presentationLayer.position.x);
     initialHorizontalAnimation.toValue = @(-self.waveLength*2);
     initialHorizontalAnimation.removedOnCompletion = NO;
     initialHorizontalAnimation.fillMode = kCAFillModeForwards;
     initialHorizontalAnimation.duration = (self.waveLength+presentationLayer.position.x)/self.waveLength;
-    
+
     [CATransaction begin];
     [CATransaction setCompletionBlock:^{
-        
+
         //phaseshift repeating animation
         CABasicAnimation *repeatingHorizontalAnimation =
         [CABasicAnimation animationWithKeyPath:@"position.x"];
         repeatingHorizontalAnimation.fromValue =@(self.lineLayer.position.x-self.waveLength*2);
         if(self.waveDirection==BAFLUIDVIEWHORIZONTALDIRECTIONLEFT){
             repeatingHorizontalAnimation.toValue = @(self.lineLayer.position.x-self.waveLength);
-            
+
         } else {
             repeatingHorizontalAnimation.toValue = @(self.lineLayer.position.x-self.waveLength*3);
         }
-        
+
         repeatingHorizontalAnimation.duration = 1.0;
         repeatingHorizontalAnimation.repeatCount = HUGE;
         repeatingHorizontalAnimation.removedOnCompletion = NO;
@@ -535,72 +554,72 @@ NSString * const kBAFluidViewCMMotionUpdate = @"BAFluidViewCMMotionUpdate";
     }];
     [self.lineLayer addAnimation:initialHorizontalAnimation forKey:@"horizontalAnimation"];
     [CATransaction commit];
-    
+
 }
 
 - (NSArray*)getBezierPathValues {
     //creating wave starting point
     CGPoint startPoint;
     startPoint = CGPointMake(0,0);
-    
+
     //grabbing random amplitude to shrink/grow to
     NSNumber *index = [NSNumber numberWithInt:arc4random_uniform((u_int32_t)self.amplitudeArray.count)];
-    
+
     int finalAmplitude = [[self.amplitudeArray objectAtIndex:index.intValue] intValue];
     NSMutableArray *values = [[NSMutableArray alloc] init];
-    
+
     //shrinking
     if (self.startingAmplitude >= finalAmplitude) {
         for (int j = self.startingAmplitude; j >= finalAmplitude; j-=self.amplitudeIncrement) {
             //create a UIBezierPath along distance
             UIBezierPath* line = [UIBezierPath bezierPath];
             [line moveToPoint:CGPointMake(startPoint.x, startPoint.y)];
-            
+
             int tempAmplitude = j;
             for (int i = self.waveLength/2; i <= self.finalX; i+=self.waveLength/2) {
                 [line addQuadCurveToPoint:CGPointMake(startPoint.x + i,startPoint.y) controlPoint:CGPointMake(startPoint.x + i - (self.waveLength/4),startPoint.y + tempAmplitude)];
                 tempAmplitude = -tempAmplitude;
             }
-            
+
             [line addLineToPoint:CGPointMake(self.finalX, 5*CGRectGetHeight(self.rootView.frame) - self.maxAmplitude)];
             [line addLineToPoint:CGPointMake(0, 5*CGRectGetHeight(self.rootView.frame) - self.maxAmplitude)];
             [line closePath];
-            
+
             [values addObject:(id)line.CGPath];
         }
     }
-    
+
     //growing
     else{
         for (int j = self.startingAmplitude; j <= finalAmplitude; j+=self.amplitudeIncrement) {
             //create a UIBezierPath along distance
             UIBezierPath* line = [UIBezierPath bezierPath];
             [line moveToPoint:CGPointMake(startPoint.x, startPoint.y)];
-            
+
             int tempAmplitude = j;
             for (int i = self.waveLength/2; i <= self.finalX; i+=self.waveLength/2) {
                 [line addQuadCurveToPoint:CGPointMake(startPoint.x + i,startPoint.y) controlPoint:CGPointMake(startPoint.x + i -(self.waveLength/4),startPoint.y + tempAmplitude)];
                 tempAmplitude = -tempAmplitude;
             }
-            
+
             [line addLineToPoint:CGPointMake(self.finalX, 5*CGRectGetHeight(self.rootView.frame) - self.maxAmplitude)];
             [line addLineToPoint:CGPointMake(0, 5*CGRectGetHeight(self.rootView.frame) - self.maxAmplitude)];
             [line closePath];
-            
+
             [values addObject:(id)line.CGPath];
         }
-        
-        
+
+
     }
-    
+
     self.startingAmplitude = finalAmplitude;
-    
+
     return [NSArray arrayWithArray:values];
-    
+
 }
 
 - (void)updateRollAdjustmentBasedOnOrientation {
-    
+
     switch (self.orientation) {
         case UIDeviceOrientationPortrait:
         {
@@ -609,15 +628,15 @@ NSString * const kBAFluidViewCMMotionUpdate = @"BAFluidViewCMMotionUpdate";
         }
         case UIDeviceOrientationLandscapeLeft:
         {
-            self.rollOrientationAdjustment = M_PI/2 ;
+            self.rollOrientationAdjustment = M_PI ;
             break;
         }
         case UIDeviceOrientationLandscapeRight:
         {
-            self.rollOrientationAdjustment = -M_PI/2;
+            self.rollOrientationAdjustment = -M_PI;
             break;
         }
-            
+
         default:
             break;
     }
