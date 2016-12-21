@@ -27,7 +27,7 @@
 
 
 /**
-Changes the fill color of the wave animation
+ Changes the fill color of the wave animation
  */
 @property(strong,nonatomic) UIColor *fillColor;
 
@@ -78,7 +78,7 @@ extern NSString * const kBAFluidViewCMMotionUpdate;
 
 /**
  Returns an object that can create the fluid animation with the given wave properties. This init function lets you adjust the wave crest properties.
- 
+
  @param aRect
  Frame for the fluid object to fill
  @param maxAmplitude
@@ -93,10 +93,10 @@ extern NSString * const kBAFluidViewCMMotionUpdate;
 
 /**
  Returns an object that can create the fluid animation with the given wave properties. This init function lets you adjust starting elevation. The other parameters have default values.
- 
+
  @param aRect
  Frame for the fluid object to fill
- @param startElevation
+ @param aStartElevation
  The starting point of the fluid animation
  @return a fluid view object with the properties defined
  */
@@ -104,27 +104,29 @@ extern NSString * const kBAFluidViewCMMotionUpdate;
 
 /**
  Returns an object that can create the fluid animation with the given wave properties. This init function lets you adjust all the wave crest and fluid properties.
- 
+
  @param aRect
  Frame for the fluid object to fill
- @param maxAmplitude
+ @param aMaxAmplitude
  Max wave crest
- @param minAmplitude
+ @param aMinAmplitude
  Min wave crest
- @param amplitudeIncrement
+ @param aAmplitudeIncrement
  Lets you chose the interval between Max and Min the random function will use
- @param startElevation
+ @param aStartElevation
  The starting point of the fluid animation
  @return a fluid view object with the properties defined
  */
 - (id)initWithFrame:(CGRect)aRect maxAmplitude:(int)aMaxAmplitude minAmplitude:(int)aMinAmplitude amplitudeIncrement:(int)aAmplitudeIncrement startElevation:(NSNumber*)aStartElevation;
 
 /**
-This method lets you choose to what level you want the fluidVIew to increase or decrease to (based on starting elevation)
+ This method lets you choose to what level you want the fluidVIew to increase or decrease to (based on starting elevation)
  @param fillPercentage
  Determines the percentage to fill to (decimal number)
  */
 - (void)fillTo:(NSNumber*)fillPercentage;
+
+- (void)fill:(NSNumber *)fillPercentage;
 
 /**
  This method lets you keep the fluid view at it's starting elevation, but creates the wave crest animation
@@ -147,7 +149,7 @@ This method lets you choose to what level you want the fluidVIew to increase or 
 - (void)stopAnimation;
 
 /**
-This method can set all the default values prior to start of animation
+ This method can set all the default values prior to start of animation
  */
 - (void)initialize;
 
